@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "fastify-api-demo",
   "version": "1.0.0",
   "description": "Simple Fastify server with / and /api endpoints",
@@ -7,6 +7,10 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "fastify": "^5.0.0"
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/static": "^9.1.1",
+    "@fastify/view": "^11.1.1",
+    "fastify": "^5.0.0",
+    "pug": "^3.0.4"
   }
 }
