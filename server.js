@@ -4,14 +4,15 @@ const fastifyStatic = require('@fastify/static');
 const fastifyView = require('@fastify/view');
 const fastifyFormbody = require('@fastify/formbody');
 const pug = require('pug');
+const {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser
+} = require('./database');
 
 const fastify = Fastify({ logger: true });
-
-const users = [
-  { id: 1, name: 'Ivan Ivanov', email: 'ivan@example.com' },
-  { id: 2, name: 'Anna Petrova', email: 'anna@example.com' },
-  { id: 3, name: 'Petr Sidorov', email: 'petr@example.com' }
-];
 
 fastify.register(fastifyFormbody);
 
@@ -25,27 +26,40 @@ fastify.register(fastifyView, {
   root: path.join(__dirname, 'views')
 });
 
-fastify.get('/', async (request, reply) => {
-  return reply.view('index.pug', {
-    title: 'Fastify Demo'
-  });
-});
+function renderUserForm(reply, options) {
+  return reply.view('create-user.pug', options);
+}
 
-fastify.get('/api', async () => {
-  return { message: 'Запрос прошел успешно' };
+function getValidatedUserId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function getTrimmedFormData(body) {
+  return {
+    name: body?.name?.trim() || '',
+    email: body?.email?.trim() || ''
+  };
+}
+
+fastify.get('/', async (request, reply) => {
+  return reply.redirect('/users');
 });
 
 fastify.get('/users', async (request, reply) => {
   return reply.view('users.pug', {
     title: 'Список пользователей',
-    users
+    users: await getUsers()
   });
 });
 
 fastify.get('/users/create', async (request, reply) => {
-  return reply.view('create-user.pug', {
+  return renderUserForm(reply, {
     title: 'Создание пользователя',
+    heading: 'Создание пользователя',
     errorMessage: '',
+    formAction: '/users',
+    submitLabel: 'Создать пользователя',
     formData: {
       name: '',
       email: ''
@@ -54,26 +68,91 @@ fastify.get('/users/create', async (request, reply) => {
 });
 
 fastify.post('/users', async (request, reply) => {
-  const name = request.body?.name?.trim() || '';
-  const email = request.body?.email?.trim() || '';
+  const formData = getTrimmedFormData(request.body);
 
-  if (!name || !email) {
+  if (!formData.name || !formData.email) {
     reply.code(400);
 
-    return reply.view('create-user.pug', {
+    return renderUserForm(reply, {
       title: 'Создание пользователя',
+      heading: 'Создание пользователя',
       errorMessage: 'Заполните имя и email.',
-      formData: { name, email }
+      formAction: '/users',
+      submitLabel: 'Создать пользователя',
+      formData
     });
   }
 
-  const nextId = users.length ? Math.max(...users.map((user) => user.id)) + 1 : 1;
+  await createUser(formData.name, formData.email);
 
-  users.push({
-    id: nextId,
-    name,
-    email
+  return reply.redirect('/users');
+});
+
+fastify.get('/users/:id/edit', async (request, reply) => {
+  const id = getValidatedUserId(request.params.id);
+
+  if (!id) {
+    return reply.redirect('/users');
+  }
+
+  const user = await getUserById(id);
+
+  if (!user) {
+    return reply.redirect('/users');
+  }
+
+  return renderUserForm(reply, {
+    title: 'Редактирование пользователя',
+    heading: 'Редактирование пользователя',
+    errorMessage: '',
+    formAction: `/users/${user.id}/edit`,
+    submitLabel: 'Сохранить изменения',
+    formData: user
   });
+});
+
+fastify.post('/users/:id/edit', async (request, reply) => {
+  const id = getValidatedUserId(request.params.id);
+
+  if (!id) {
+    return reply.redirect('/users');
+  }
+
+  const user = await getUserById(id);
+
+  if (!user) {
+    return reply.redirect('/users');
+  }
+
+  const formData = getTrimmedFormData(request.body);
+
+  if (!formData.name || !formData.email) {
+    reply.code(400);
+
+    return renderUserForm(reply, {
+      title: 'Редактирование пользователя',
+      heading: 'Редактирование пользователя',
+      errorMessage: 'Заполните имя и email.',
+      formAction: `/users/${id}/edit`,
+      submitLabel: 'Сохранить изменения',
+      formData: {
+        id,
+        ...formData
+      }
+    });
+  }
+
+  await updateUser(id, formData.name, formData.email);
+
+  return reply.redirect('/users');
+});
+
+fastify.post('/users/:id/delete', async (request, reply) => {
+  const id = getValidatedUserId(request.params.id);
+
+  if (id) {
+    await deleteUser(id);
+  }
 
   return reply.redirect('/users');
 });

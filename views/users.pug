@@ -6,7 +6,7 @@ html(lang="ru")
     title= title
     link(rel="stylesheet" href="/public/styles.css")
   body
-    main.page
+    main.page.page--top
       section.card
         h1 Список пользователей
         if users.length
@@ -16,8 +16,11 @@ html(lang="ru")
                 span.user-id ID #{user.id}
                 strong.user-name= user.name
                 a.user-email(href=`mailto:${user.email}`)= user.email
+                div.user-actions
+                  a.link(href=`/users/${user.id}/edit`) Редактировать
+                  form.inline-form(action=`/users/${user.id}/delete` method="post")
+                    button.button.button-secondary(type="submit") Удалить
         else
           p Пользователи пока не добавлены.
         nav.links
           a.link(href="/users/create") Добавить пользователя
-          a.link(href="/") На главную

@@ -19,7 +19,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: Georgia, "Times New Roman", serif;
   color: var(--text);
   background:
     radial-gradient(circle at top left, rgba(166, 75, 42, 0.14), transparent 30%),
@@ -32,6 +32,10 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 32px 16px;
+}
+
+.page--top {
+  align-items: flex-start;
 }
 
 .card {
@@ -75,6 +79,14 @@ p {
 .button:hover {
   transform: translateY(-1px);
   background: var(--primary-dark);
+}
+
+.button-secondary {
+  background: #2c2a28;
+}
+
+.button-secondary:hover {
+  background: #111;
 }
 
 .links {
@@ -124,6 +136,18 @@ p {
 
 .user-email {
   color: var(--primary);
+}
+
+.user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.inline-form {
+  margin: 0;
 }
 
 .user-form {
